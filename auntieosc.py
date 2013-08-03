@@ -82,6 +82,8 @@ class Auntieosc(object):
         user = self.user(nick)
         user['joined-at'] = when
         user['lines'] = 0
+        # do something with this eventually
+        user.pop('last-in-at', None)
 
     def action_msg(self, when, nick):
         user = self.user(nick)
@@ -91,6 +93,7 @@ class Auntieosc(object):
 
     def action_quit(self, when, nick):
         user = self.user(nick)
+        user['last-in-at'] = when
         joined_at = user.pop('joined-at', None)
         if not joined_at:
             return
