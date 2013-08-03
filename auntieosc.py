@@ -76,7 +76,7 @@ class Auntieosc(object):
                 yaml.safe_dump(self.users, outfile, default_flow_style=False)
 
     def user(self, nick):
-        return self.users.setdefault(nick, {'nicks': {nick: 1}})
+        return self.users.setdefault(nick, {'nicks': {nick: 1}, 'n-visits': 1})
 
     def action_joined(self, when, nick):
         user = self.user(nick)
@@ -106,6 +106,7 @@ class Auntieosc(object):
             bucket = None
         visits = user.setdefault('visits', {})
         visits[bucket] = visits.get(bucket, 0) + time_spent
+        user['n-visits'] = user.get('n-visits', 0) + 1
 
     action_left = action_kicked = action_quit
 
