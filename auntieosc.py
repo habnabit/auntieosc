@@ -91,9 +91,10 @@ class Auntieosc(object):
 
     def action_quit(self, when, nick):
         user = self.user(nick)
-        if not user.get('joined-at'):
+        joined_at = user.pop('joined-at', None)
+        if not joined_at:
             return
-        time_spent = (when - user['joined-at']).total_seconds()
+        time_spent = (when - joined_at).total_seconds()
         lines = user.pop('lines', 0)
         for bucket in self.lines_buckets:
             if lines <= bucket:
