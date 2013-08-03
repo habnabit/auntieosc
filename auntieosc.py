@@ -75,10 +75,7 @@ class Auntieosc(object):
                 yaml.safe_dump(self.users, outfile, default_flow_style=False)
 
     def user(self, nick):
-        return self.users.setdefault(nick, {})
-
-    def popuser(self, nick):
-        return self.users.pop(nick, {})
+        return self.users.setdefault(nick, {'nicks': {nick}})
 
     def action_joined(self, when, nick):
         user = self.user(nick)
@@ -108,7 +105,10 @@ class Auntieosc(object):
     action_left = action_quit
 
     def action_nick(self, when, (oldnick, newnick)):
-        self.users[newnick] = self.popuser(oldnick)
+        if newnick in self.users:
+            return
+        user = self.users[newnick] = self.user(oldnick)
+        user['nicks'].add(newnick)
 
 
 if __name__ == '__main__':
