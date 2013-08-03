@@ -23,6 +23,7 @@ date_line = log_opened | log_closed | day_changed
 
 presence_action_word = ('joined' | 'left' | 'quit')
 presence_action = '(-) ' nick:nick ' ' word ' has ' presence_action_word:action ' ' skip_to_end -> (action, nick)
+kicked = '(-) ' nick:nick ' was kicked ' skip_to_end -> ('kicked', nick)
 privmsg = '<' anything nick:nick '> ' skip_to_end -> ('msg', nick)
 emote = ' * ' nick:nick ' ' skip_to_end -> ('msg', nick)
 nick_change = '(-) ' nick:oldnick ' is now known as ' nick:newnick skip_to_end -> ('nick', (oldnick, newnick))
@@ -102,13 +103,15 @@ class Auntieosc(object):
         visits = user.setdefault('visits', {})
         visits[bucket] = visits.get(bucket, 0) + time_spent
 
-    action_left = action_quit
+    action_left = action_kicked = action_quit
 
     def action_nick(self, when, (oldnick, newnick)):
         user = self.user(oldnick)
         user['nicks'][newnick] = user['nicks'].get(newnick, 0) + 1
         if newnick not in self.users:
             self.users[newnick] = user
+        self.action_quit(when, oldnick)
+        self.action_joined(when, newnick)
 
 if __name__ == '__main__':
     import sys
