@@ -13,6 +13,7 @@ irssi_grammar_source = """
 nl = '\n'
 skip_to_end = <(~nl anything)*>:content nl -> content
 word = <(~' ' ~nl anything)+>
+nick = <(~' ' ~nl ~':' ~'>' anything)+>:channel (':' (~' ' ~'>' anything)+)? -> channel
 timestamp = <digit{2}>:hour ':' <digit{2}>:minute -> datetime.time(int(hour), int(minute))
 
 log_opened = '--- Log opened ' skip_to_end:when -> ('base', None, parse_datetime(when))
@@ -21,10 +22,10 @@ day_changed = '--- Day changed ' skip_to_end:when -> ('base', None, parse_dateti
 date_line = log_opened | log_closed | day_changed
 
 presence_action_word = ('joined' | 'left' | 'quit')
-presence_action = '(-) ' word:nick ' ' word ' has ' presence_action_word:action ' ' skip_to_end -> (action, nick)
-privmsg = '<' anything <(~'>' anything)+>:nick '> ' skip_to_end -> ('msg', nick)
-emote = ' * ' word:nick ' ' skip_to_end -> ('msg', nick)
-nick_change = '(-) ' word:oldnick ' is now known as ' word:newnick skip_to_end -> ('nick', (oldnick, newnick))
+presence_action = '(-) ' nick:nick ' ' word ' has ' presence_action_word:action ' ' skip_to_end -> (action, nick)
+privmsg = '<' anything nick:nick '> ' skip_to_end -> ('msg', nick)
+emote = ' * ' nick:nick ' ' skip_to_end -> ('msg', nick)
+nick_change = '(-) ' nick:oldnick ' is now known as ' nick:newnick skip_to_end -> ('nick', (oldnick, newnick))
 cruft = '(-) ' skip_to_end:cruft -> ('cruft', cruft)
 
 line = timestamp:when ' ' (presence_action | privmsg | emote | nick_change | cruft):(action, arg) -> (action, when, arg)
