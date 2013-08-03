@@ -2,10 +2,14 @@ from __future__ import division
 
 import argparse
 import datetime
+import logging
 
 from dateutil.parser import parse as parse_datetime
 import parsley
 import yaml
+
+
+log = logging.getLogger(__name__)
 
 
 irssi_grammar_source = """
@@ -53,11 +57,13 @@ class Auntieosc(object):
         args = parser.parse_args(argv)
 
         if args.read:
+            log.info('reading prior state from %r', args.read)
             with open(args.read, 'rb') as infile:
                 self.users = yaml.safe_load(infile)
 
         base_datetime = None
         for infile in args.infiles:
+            log.info('processing %r', infile.name)
             with infile:
                 contents = infile.read()
             events = irssi_parser(contents).document()
@@ -72,6 +78,7 @@ class Auntieosc(object):
                     action_method(when, arg)
 
         if args.write:
+            log.info('writing state to %r', args.write)
             with open(args.write, 'wb') as outfile:
                 yaml.safe_dump(self.users, outfile, default_flow_style=False)
 
@@ -120,4 +127,6 @@ class Auntieosc(object):
 
 if __name__ == '__main__':
     import sys
+    logging.basicConfig(
+        stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(levelname)s %(message)s')
     Auntieosc().main(sys.argv[1:])
