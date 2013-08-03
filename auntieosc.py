@@ -44,8 +44,13 @@ class Auntieosc(object):
     def main(self, argv=()):
         parser = argparse.ArgumentParser()
         parser.add_argument('infiles', type=argparse.FileType('rb'), nargs='+')
-        parser.add_argument('-w', '--write', type=argparse.FileType('wb'))
+        parser.add_argument('-r', '--read')
+        parser.add_argument('-w', '--write')
         args = parser.parse_args(argv)
+
+        if args.read:
+            with open(args.read, 'rb') as infile:
+                self.users = yaml.safe_load(infile)
 
         for infile in args.infiles:
             with infile:
@@ -58,7 +63,7 @@ class Auntieosc(object):
                     action_method(when, arg)
 
         if args.write:
-            with args.write as outfile:
+            with open(args.write, 'wb') as outfile:
                 yaml.safe_dump(self.users, outfile, default_flow_style=False)
 
     def user(self, nick):
