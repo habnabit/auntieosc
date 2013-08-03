@@ -26,7 +26,7 @@ presence_action = '(-) ' nick:nick ' ' word ' has ' presence_action_word:action 
 privmsg = '<' anything nick:nick '> ' skip_to_end -> ('msg', nick)
 emote = ' * ' nick:nick ' ' skip_to_end -> ('msg', nick)
 nick_change = '(-) ' nick:oldnick ' is now known as ' nick:newnick skip_to_end -> ('nick', (oldnick, newnick))
-cruft = '(-) ' skip_to_end:cruft -> ('cruft', cruft)
+cruft = skip_to_end:cruft -> ('cruft', cruft)
 
 line = timestamp:when ' ' (presence_action | privmsg | emote | nick_change | cruft):(action, arg) -> (action, when, arg)
 
