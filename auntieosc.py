@@ -29,7 +29,7 @@ emote = ' * ' nick:nick ' ' skip_to_end -> ('msg', nick)
 nick_change = '(-) ' nick:oldnick ' is now known as ' nick:newnick skip_to_end -> ('nick', (oldnick, newnick))
 cruft = skip_to_end:cruft -> ('cruft', cruft)
 
-line = timestamp:when ' ' (presence_action | privmsg | emote | nick_change | cruft):(action, arg) -> (action, when, arg)
+line = timestamp:when ' ' (presence_action | kicked | privmsg | emote | nick_change | cruft):(action, arg) -> (action, when, arg)
 
 document = (date_line | line)*
 
