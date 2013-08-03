@@ -15,8 +15,10 @@ skip_to_end = <(~nl anything)*>:content nl -> content
 word = <(~' ' ~nl anything)+>
 timestamp = <digit{2}>:hour ':' <digit{2}>:minute -> datetime.time(int(hour), int(minute))
 
-log_opened = '--- Log opened ' skip_to_end:when -> parse_datetime(when)
-log_closed = '--- Log closed ' skip_to_end
+log_opened = '--- Log opened ' skip_to_end:when -> ('base', None, parse_datetime(when))
+log_closed = '--- Log closed ' skip_to_end -> ('cruft', None, None)
+day_changed = '--- Day changed ' skip_to_end:when -> ('base', None, parse_datetime(when))
+date_line = log_opened | log_closed | day_changed
 
 presence_action_word = ('joined' | 'left' | 'quit')
 presence_action = '(-) ' word:nick ' ' word ' has ' presence_action_word:action ' ' skip_to_end -> (action, nick)
@@ -27,7 +29,7 @@ cruft = '(-) ' skip_to_end:cruft -> ('cruft', cruft)
 
 line = timestamp:when ' ' (presence_action | privmsg | emote | nick_change | cruft):(action, arg) -> (action, when, arg)
 
-document = log_opened:when line*:lines log_closed? -> (when, lines)
+document = (date_line | line)*
 
 """
 
@@ -52,12 +54,17 @@ class Auntieosc(object):
             with open(args.read, 'rb') as infile:
                 self.users = yaml.safe_load(infile)
 
+        base_datetime = None
         for infile in args.infiles:
             with infile:
                 contents = infile.read()
-            base_datetime, events = irssi_parser(contents).document()
+            events = irssi_parser(contents).document()
             for action, when, arg in events:
-                when = base_datetime.combine(base_datetime, when)
+                if action == 'base':
+                    base_datetime = arg
+                    continue
+                if when is not None:
+                    when = base_datetime.combine(base_datetime, when)
                 action_method = getattr(self, 'action_' + action, None)
                 if action_method is not None:
                     action_method(when, arg)
