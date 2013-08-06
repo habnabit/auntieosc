@@ -64,12 +64,10 @@ def main(infile_path):
         data[most_used_nick] = v
 
     now = datetime.datetime.now()
-    cutoff = now - datetime.timedelta(days=21)
+    cutoff = now - datetime.timedelta(days=999)
     new_data = {}
     for k, v in data.iteritems():
-        if 'joined-at' in v and v['joined-at'] < cutoff:
-            continue
-        elif 'last-in-at' in v and v['last-in-at'] < cutoff:
+        if v['last-in-at'] < cutoff:
             continue
         new_data[k] = v
 
@@ -96,6 +94,12 @@ def main(infile_path):
 
     print 'top idle-exceeds-active-visitors by time spent in channel:'
     columnify(rankify([k for key, k in keyed_data if key[2] > 0]))
+    print
+
+    print 'most talkative irc-ers:'
+    columnify(rankify(['%s (%.3g)' % (k, data[k]['efficiency'])
+                       for k in sorted(data, key=lambda k: data[k].get('total-lines', 0), reverse=True)
+                       if data[k]['efficiency'] is not None]))
 
 
 if __name__ == '__main__':

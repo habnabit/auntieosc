@@ -6,6 +6,7 @@ from __future__ import division
 import argparse
 import datetime
 import logging
+import math
 
 from dateutil.parser import parse as parse_datetime
 import parsley
@@ -80,6 +81,8 @@ class Auntieosc(object):
                 if action_method is not None:
                     action_method(when, arg)
 
+        self.finish_up()
+
         if args.write:
             log.info('writing state to %r', args.write)
             with open(args.write, 'wb') as outfile:
@@ -117,6 +120,8 @@ class Auntieosc(object):
         visits = user.setdefault('visits', {})
         visits[bucket] = visits.get(bucket, 0) + time_spent
         user['n-visits'] = user.get('n-visits', 0) + 1
+        user['total-lines'] = user.get('total-lines', 0) + lines
+        user['total-time'] = user.get('total-time', 0) + time_spent
 
     action_left = action_kicked = action_quit
 
@@ -127,6 +132,15 @@ class Auntieosc(object):
             self.users[newnick] = user
         self.action_quit(when, oldnick)
         self.action_joined(when, newnick)
+
+    def finish_up(self):
+        now = datetime.datetime.now()
+        for nick in self.users:
+            self.action_quit(now, nick)
+            user = self.users[nick]
+            prelog = user.get('total-lines', 0) / (user.get('total-time') or 1)
+            user['efficiency'] = math.log(prelog) if prelog else None
+
 
 if __name__ == '__main__':
     import sys
