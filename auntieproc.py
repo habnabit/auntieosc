@@ -1,6 +1,7 @@
 # Copyright (c) Aaron Gallagher <_@habnab.it>
 # See COPYING for details.
 
+import argparse
 import datetime
 from itertools import izip_longest
 import subprocess
@@ -45,8 +46,14 @@ def columnify(data):
         print
 
 
-def main(infile_path):
-    with open(infile_path) as infile:
+def main(argv):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('infile', type=argparse.FileType('rb'))
+    parser.add_argument('-c', '--cutoff', type=int, help='cutoff in days', default=21)
+    parser.add_argument('-t', '--top', type=int, help='top N users to show', default=100)
+    args = parser.parse_args(argv)
+
+    with args.infile as infile:
         data = yaml.safe_load(infile)
 
     deduped = []
@@ -64,7 +71,7 @@ def main(infile_path):
         data[most_used_nick] = v
 
     now = datetime.datetime.now()
-    cutoff = now - datetime.timedelta(days=999)
+    cutoff = now - datetime.timedelta(days=args.cutoff)
     new_data = {}
     for k, v in data.iteritems():
         if v['last-in-at'] < cutoff:
@@ -82,7 +89,7 @@ def main(infile_path):
         adjusted_time_spent = g(0) + g(1) - g(100) - g(None)
         return said_nothing, said_not_much, adjusted_time_spent
 
-    keyed_data = sorted(((idler_key(k), k) for k in data), reverse=True)
+    keyed_data = sorted(((idler_key(k), k) for k in data), reverse=True)[:args.top]
 
     print 'top said-nothingers by time spent in channel:'
     columnify(rankify([k for key, k in keyed_data if key[0]]))
@@ -97,11 +104,12 @@ def main(infile_path):
     print
 
     print 'most talkative irc-ers:'
+    talkative = sorted(data, key=lambda k: data[k].get('total-lines', 0), reverse=True)
     columnify(rankify(['%s (%.3g)' % (k, data[k]['efficiency'])
-                       for k in sorted(data, key=lambda k: data[k].get('total-lines', 0), reverse=True)
+                       for k in talkative[:args.top]
                        if data[k]['efficiency'] is not None]))
 
 
 if __name__ == '__main__':
     import sys
-    main(sys.argv[1])
+    main(sys.argv[1:])
